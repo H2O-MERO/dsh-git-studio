@@ -10,6 +10,10 @@ DeepSeek Harness（DSH）Web GUI 的嵌入式 Git 仓库图谱可视化插件。
 
 ![Git 图谱](https://img.shields.io/badge/DSH-Plugin-58a6ff)
 
+## 📸 效果预览
+
+<img src="assets/git-graph-demo.png" alt="Git 图谱演示" width="720">
+
 ## ✨ 功能
 
 - **提交历史图**：GitHub 风格提交列表，分支分组折叠，分支着色

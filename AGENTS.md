@@ -20,6 +20,7 @@ dsh-git-graph 是 DeepSeek Harness (DSH) Web GUI 的嵌入式 Git 仓库图谱�
 ├── dsh.plugin.json   # DSH 官方插件清单（id: dsh-external/dsh-git-graph）
 ├── cordis.patch.yml  # profile 挂载点（config.repo 为仓库白名单，示例路径）
 ├── sync-deploy.ps1   # 同步到本地 DSH 部署目录（-Dst 参数 / $env:DSH_GIT_GRAPH_DST）
+├── assets/           # README 演示截图
 ├── README.md / README_EN.md
 └── LICENSE           # MIT
 ```

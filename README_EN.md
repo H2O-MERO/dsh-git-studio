@@ -8,6 +8,10 @@ View, browse and manage git repositories right inside the harness conversation �
 
 ![Git 图谱](https://img.shields.io/badge/DSH-Plugin-58a6ff)
 
+## 📸 Preview
+
+<img src="assets/git-graph-demo.png" alt="Git Graph demo" width="720">
+
 ## ✨ Features
 
 - **Commit history graph**: GitHub-style commit list with foldable per-branch groups and branch coloring

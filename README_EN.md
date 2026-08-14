@@ -14,11 +14,11 @@ View, browse and manage git repositories right inside the harness conversation �
 
 ## ✨ Features
 
-- **Commit history graph**: GitHub-style commit list with foldable per-branch groups and branch coloring
+- **Commit history graph**: GitHub-style commit list with foldable per-branch groups and branch coloring (local and remote branches each get their own group)
 - **Follows the current session**: shows the git repository of the workspace you are viewing; switching sessions follows automatically. Non-git workspaces show an empty state
 - **Branch filtering**: checked = visible, unchecked = fully hidden (empty selection shows an empty list)
 - **Commit details**: commit message, changed files, per-file diffs, compare two commits (Ctrl+click)
-- **Uncommitted changes (VSCode-style)**: grouped file lists (Staged / Changes / Untracked), status badges (A/M/D/R/U), per-file +/− line counts, click-to-expand per-file diff, renames `old → new`, untracked file contents
+- **Uncommitted changes (VSCode-style, persistent at the top of the graph)**: grouped file lists (Staged / Changes / Untracked), status badges (A/M/D/R/U/?), per-file +/− line counts, click-to-expand per-file diff, renames `old → new`, untracked file contents; the ☑ groups toggle hides any group, and both the panel and each group fold on click
 - **Keyboard shortcuts**: `Ctrl+F` search, `Ctrl+H` back to HEAD, `↑↓` navigation, `Esc` close
 - **Dark/light theme**: follows the host GUI automatically, or pin it manually
 - **Mount point**: the "Git 图谱" tab inside the session pane (next to the trajectory tab)
@@ -69,9 +69,10 @@ Open http://127.0.0.1:3080 and select the **Git 图谱** tab in any session.
 | "Git 图谱" tab in a session | Open the graph for the current session's workspace |
 | Branch group header | Click to fold / unfold that branch |
 | ☑ Branch filter | Checked = visible, unchecked = fully hidden |
+| "未提交改动" block at the top of the graph | Staged / Changes / Untracked overview (incl. untracked files); click a file row to expand its diff; ↻ refreshes it alone |
 | Commit row | Click for details; Ctrl+click to compare with another commit |
 | Right-click a commit row | Git operation menu |
-| "未提交改动" status line / "工作区" button | Open the VSCode-style changes panel; click a file row to expand its diff |
+| "未提交改动" status line | Click to scroll to the top changes block |
 | ↻ Refresh | Reload repository data |
 
 ## 🛠️ Development

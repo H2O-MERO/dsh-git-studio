@@ -1,6 +1,6 @@
 {
   "id": "dsh-external/dsh-git-graph",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "main": "./index.js",
   "description": "Embedded git repository graph visualizer for the DeepSeek Harness web GUI: commit history graph, branch filtering, commit details, file diffs, VSCode-style uncommitted changes panel",
   "engines": {

@@ -290,77 +290,92 @@
   .sf-diff-close { cursor: pointer; color: var(--text2); }
   .sf-diff-close:hover { color: var(--text); }
   .sf-diff-block pre.diff { border: 0; border-radius: 0; margin: 0; max-height: 340px; }
-  /* --- workdir modal (VSCode-style changes) --- */
-  #modalMask {
-    position: absolute; inset: 0; z-index: 20; display: none;
-    background: rgba(0,0,10,.5); align-items: center; justify-content: center;
+  /* --- workdir panel (VSCode-style changes, persistent at the top of the graph) --- */
+  #wdPanel {
+    margin: 8px 12px 0; border: 1px solid var(--border); border-radius: 10px;
+    background: var(--bg2);
+    /* no overflow:hidden here: the ☑ 分组 dropdown is absolutely positioned and
+       must stay visible even when the panel body is short/collapsed */
   }
-  #modalMask.show { display: flex; }
-  #modal {
-    width: min(680px, 92%); max-height: 84%;
-    background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
-    display: flex; flex-direction: column; overflow: hidden;
-    box-shadow: 0 12px 40px rgba(0,0,0,.5);
+  #wdPanel .wd-top {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 12px; border-bottom: 1px solid var(--border);
+    background: var(--bg3); cursor: pointer; user-select: none;
+    border-radius: 9px 9px 0 0;
   }
-  #modal .mhead {
-    padding: 10px 16px; border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 13.5px;
+  #wdPanel.folded .wd-top { border-radius: 9px; }
+  #wdPanel .wd-top .wd-title { font-weight: 700; font-size: 12.5px; display: inline-flex; align-items: center; gap: 7px; }
+  #wdPanel .wd-caret { color: var(--text3); font-size: 10px; flex: none; transition: transform .15s ease; }
+  #wdPanel .wd-top .wd-caret { transform: rotate(90deg); }
+  #wdPanel.folded .wd-top .wd-caret { transform: rotate(0deg); }
+  #wdPanel.folded .wd-body { display: none; }
+  #wdPanel .wd-top .wd-counts { font-weight: 600; font-size: 11px; color: var(--text2); }
+  #wdPanel .wd-top .sp { flex: 1; }
+  #wdPanel .wd-top button {
+    height: 24px; padding: 0 10px; border: 1px solid var(--border);
+    background: var(--bg2); color: var(--text); border-radius: 6px;
+    cursor: pointer; font-size: 11.5px;
   }
-  #modal .mhead .mcount { font-weight: 600; font-size: 11.5px; color: var(--text2); }
-  #modal .mhead .sp { flex: 1; }
-  #modal .mhead button {
-    height: 26px; padding: 0 12px; border: 1px solid var(--border);
-    background: var(--bg3); color: var(--text); border-radius: 7px;
-    cursor: pointer; font-size: 12px;
+  #wdPanel .wd-top button:hover { border-color: var(--text3); background: var(--bg4); }
+  #wdPanel .wd-filterWrap { position: relative; }
+  #wdPanel .wd-menu {
+    display: none; position: absolute; top: 27px; right: 0; z-index: 30;
+    min-width: 158px; background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 5px; box-shadow: 0 8px 24px rgba(0,0,0,.45);
   }
-  #modal .mhead button:hover { border-color: var(--text3); background: var(--bg4); }
-  #modal .mbody { padding: 8px 10px; overflow: auto; font-size: 12.5px; }
-  #modal .wd-empty { color: var(--text3); text-align: center; padding: 28px 0 20px; }
-  #modal .wd-group { margin-bottom: 6px; }
-  #modal .wd-head {
+  #wdPanel .wd-menu.show { display: block; }
+  #wdPanel .wd-menu label {
+    display: flex; align-items: center; gap: 7px;
+    padding: 4px 8px; border-radius: 6px; cursor: pointer;
+    font-size: 12.5px; white-space: nowrap;
+  }
+  #wdPanel .wd-menu label:hover { background: var(--bg4); }
+  #wdPanel .wd-menu input { accent-color: var(--accent); cursor: pointer; }
+  #wdPanel .wd-clean { padding: 7px 12px; font-size: 12px; color: var(--green); }
+  #wdPanel .wd-head {
     display: flex; align-items: center; gap: 8px;
-    padding: 5px 8px; font-size: 11px; font-weight: 700;
+    padding: 6px 12px 2px; font-size: 11px; font-weight: 700;
     color: var(--text2); text-transform: uppercase; letter-spacing: .3px;
+    cursor: pointer; user-select: none;
   }
-  #modal .wd-row {
+  #wdPanel .wd-head:hover { color: var(--text); }
+  #wdPanel .wd-head .wd-caret { transform: rotate(90deg); }
+  #wdPanel .wd-group.folded .wd-caret { transform: rotate(0deg); }
+  #wdPanel .wd-group.folded .wd-row { display: none; }
+  #wdPanel .wd-row {
     display: flex; align-items: center; gap: 8px;
-    padding: 4px 8px 4px 12px; border-radius: 6px; cursor: pointer;
+    padding: 3px 12px 3px 16px; border-radius: 6px; cursor: pointer;
   }
-  #modal .wd-row:hover { background: var(--bg4); }
-  #modal .wd-row.open { background: var(--bg3); }
-  #modal .wd-badge {
+  #wdPanel .wd-row:hover { background: var(--bg4); }
+  #wdPanel .wd-row.open { background: var(--bg3); }
+  #wdPanel .wd-badge {
     flex: none; width: 20px; height: 20px; border-radius: 5px;
     display: inline-flex; align-items: center; justify-content: center;
     font-size: 10.5px; font-weight: 800; font-family: Consolas, monospace;
   }
-  #modal .wd-badge.A { background: rgba(63,185,80,.18); color: var(--green); }
-  #modal .wd-badge.M { background: rgba(240,136,62,.16); color: var(--orange); }
-  #modal .wd-badge.D { background: rgba(248,81,73,.16); color: var(--red); }
-  #modal .wd-badge.R { background: rgba(188,140,255,.16); color: #bc8cff; }
-  #modal .wd-badge.U { background: rgba(210,153,34,.16); color: var(--yellow); }
-  #modal .wd-badge.q { background: rgba(154,167,180,.16); color: var(--text2); }
-  #modal .wd-path {
+  #wdPanel .wd-badge.A { background: rgba(63,185,80,.18); color: var(--green); }
+  #wdPanel .wd-badge.M { background: rgba(240,136,62,.16); color: var(--orange); }
+  #wdPanel .wd-badge.D { background: rgba(248,81,73,.16); color: var(--red); }
+  #wdPanel .wd-badge.R { background: rgba(188,140,255,.16); color: #bc8cff; }
+  #wdPanel .wd-badge.U { background: rgba(210,153,34,.16); color: var(--yellow); }
+  #wdPanel .wd-badge.q { background: rgba(154,167,180,.16); color: var(--text2); }
+  #wdPanel .wd-path {
     flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     font-family: Consolas, monospace; font-size: 12px;
   }
-  #modal .wd-old { color: var(--text3); text-decoration: line-through; }
-  #modal .wd-counts { flex: none; font-size: 11px; font-family: Consolas, monospace; }
-  #modal .wd-counts .add { color: var(--green); }
-  #modal .wd-counts .del { color: var(--red); }
-  #modal .wd-binary { flex: none; font-size: 10px; color: var(--text3); }
-  #modal .wd-diff { display: none; }
-  #modal .wd-row.open .wd-diff { display: block; }
-  #modal .wd-diff pre {
+  #wdPanel .wd-old { color: var(--text3); text-decoration: line-through; }
+  #wdPanel .wd-counts { flex: none; font-size: 11px; font-family: Consolas, monospace; }
+  #wdPanel .wd-counts .add { color: var(--green); }
+  #wdPanel .wd-counts .del { color: var(--red); }
+  #wdPanel .wd-binary { flex: none; font-size: 10px; color: var(--text3); }
+  #wdPanel .wd-diff { display: none; }
+  #wdPanel .wd-row.open .wd-diff { display: block; }
+  #wdPanel .wd-diff pre {
     margin: 6px 0 4px; padding: 10px 12px;
     background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
     overflow: auto; font: 11.5px/1.6 Consolas, "Courier New", monospace;
     color: var(--text); white-space: pre; max-height: 420px;
   }
-  #modal .mclose {
-    border: 1px solid var(--border); background: var(--bg3); color: var(--text);
-    border-radius: 7px; padding: 4px 14px; cursor: pointer; font-size: 12px;
-  }
-  #modal .mclose:hover { border-color: var(--text3); background: var(--bg4); }
   /* --- status line --- */
   #statusLine {
     height: 32px; flex: none;
@@ -444,7 +459,6 @@
     </div>
   </div>
   <button id="btnRefresh" title="重新加载">↻ 刷新</button>
-  <button id="btnStatus" title="工作区状态">工作区</button>
   <button id="btnTheme" title="切换明暗主题">◐ 主题</button>
   <span class="hint">滚轮上下滚动 · ↑↓ 导航 · 右键菜单</span>
 </header>
@@ -459,6 +473,7 @@
       <div class="es-sub">该对话的工作区没有 git 仓库，图谱不显示。</div>
       <div class="es-path" id="emptyPath"></div>
     </div>
+    <div id="wdPanel"></div>
     <div id="commitList"></div>
   </div>
   <div id="detail">
@@ -471,12 +486,6 @@
 </div>
 <div id="statusLine"></div>
 <div id="ctxMenu"></div>
-<div id="modalMask">
-  <div id="modal">
-    <div class="mhead"><span id="mHeadTitle">未提交改动</span><span class="mcount" id="mCount"></span><span class="sp"></span><button class="mclose" id="mRefresh">↻ 刷新</button><button class="mclose" id="mClose">关闭</button></div>
-    <div class="mbody" id="mBody"></div>
-  </div>
-</div>
 <script>
 "use strict";
 /* ===================== state ===================== */
@@ -485,6 +494,9 @@ let COMMITS = [];          // [{hash, parents[], author, email, date, subject, r
 let BRANCHES = [];         // [{refname, kind, name, sha, head}]
 let WORKSTATUS = null;     // {branch, staged[], unstaged[], untracked[], counts}
 let wdDiffCache = new Map(); // workfile cache: "staged\0path" -> display text
+let WD_SHOW = { staged: true, unstaged: true, untracked: true }; // group visibility toggles
+let WD_FOLDED = false;      // whole panel collapsed
+const WD_GROUP_FOLDED = new Set(); // folded group keys (staged/unstaged/untracked)
 let SELECTED = null;
 let SEARCH = "";
 let FILTER = "all";        // "all" | "multi"
@@ -731,6 +743,25 @@ function buildRows() {
   }
   for (const b of BRANCHES) {
     if (b.kind !== "local" || (headB && b.refname === headB.refname)) continue;
+    const chain = [];
+    let cur = b.sha;
+    while (cur && map.has(cur) && !seen.has(cur)) {
+      seen.add(cur);
+      chain.push(cur);
+      const p = map.get(cur).parents[0] || null;
+      if (p && seen.has(p)) break; // merged into an already-shown commit
+      cur = p;
+    }
+    if (!chain.length) continue;
+    rows.push({ type: "head", refname: b.refname, name: b.name, tip: chain[0], count: chain.length });
+    if (!BRANCH_FOLDED.has(b.refname)) {
+      for (const h of chain) rows.push({ type: "commit", hash: h });
+    }
+  }
+  // remote branches: same treatment, so remote-only commits get their own
+  // foldable group instead of vanishing (or being buried in the leftovers).
+  for (const b of BRANCHES) {
+    if (b.kind !== "remote") continue;
     const chain = [];
     let cur = b.sha;
     while (cur && map.has(cur) && !seen.has(cur)) {
@@ -1165,55 +1196,140 @@ async function showFileDiff(hash, file, rowEl) {
 }
 
 /* ===================== workdir modal (VSCode-style) ===================== */
-async function openStatus() {
-  const mb = $("mBody");
-  mb.innerHTML = "";
+/* ===================== workdir panel (persistent, top of the graph) ===================== */
+/** Fetch workstatus, then render the top panel + status line. */
+async function refreshWorkdir() {
+  const panel = $("wdPanel");
+  panel.innerHTML = "";
   const loading = document.createElement("div");
-  loading.className = "wd-empty";
+  loading.className = "wd-clean";
   loading.textContent = "加载工作区状态…";
-  mb.appendChild(loading);
-  $("modalMask").classList.add("show");
+  panel.appendChild(loading);
   try {
     const ws = await api("workstatus");
-    if (!ws.ok) { mb.textContent = "加载失败: " + (ws.error || "?"); return; }
+    if (!ws.ok) { panel.innerHTML = ""; return; }
     WORKSTATUS = ws;
     renderWorkdir();
-  } catch (err) {
-    mb.textContent = "加载失败: " + err.message;
-  }
+    renderStatusLine();
+  } catch { /* ignore */ }
 }
 
 function renderWorkdir() {
-  const mb = $("mBody");
-  mb.innerHTML = "";
+  const panel = $("wdPanel");
+  panel.innerHTML = "";
   const ws = WORKSTATUS;
-  $("mCount").textContent = `已暂存 ${ws.counts.staged} · 更改 ${ws.counts.unstaged} · 未跟踪 ${ws.counts.untracked}`;
+  const total = ws.counts.staged + ws.counts.unstaged + ws.counts.untracked;
 
+  const top = document.createElement("div");
+  top.className = "wd-top";
+  const caret = document.createElement("span");
+  caret.className = "wd-caret";
+  caret.textContent = "▶";
+  top.appendChild(caret);
+  const title = document.createElement("span");
+  title.className = "wd-title";
+  title.textContent = "未提交改动";
+  top.appendChild(title);
+  const counts = document.createElement("span");
+  counts.className = "wd-counts";
+  counts.textContent = `已暂存 ${ws.counts.staged} · 更改 ${ws.counts.unstaged} · 未跟踪 ${ws.counts.untracked}`;
+  top.appendChild(counts);
+  const sp = document.createElement("span");
+  sp.className = "sp";
+  top.appendChild(sp);
+
+  // group visibility dropdown (已暂存 / 更改 / 未跟踪)
+  const filterWrap = document.createElement("div");
+  filterWrap.className = "wd-filterWrap";
+  const filterBtn = document.createElement("button");
+  filterBtn.type = "button";
+  filterBtn.textContent = "☑ 分组";
+  filterBtn.title = "选择显示哪些分组";
+  const menu = document.createElement("div");
+  menu.className = "wd-menu";
+  filterBtn.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    menu.classList.toggle("show");
+  });
+  const mkToggle = (key, label) => {
+    const lab = document.createElement("label");
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = WD_SHOW[key];
+    cb.addEventListener("change", () => {
+      WD_SHOW[key] = cb.checked;
+      renderWdGroups(body);
+    });
+    lab.appendChild(cb);
+    lab.appendChild(document.createTextNode(label));
+    menu.appendChild(lab);
+  };
+  mkToggle("staged", "已暂存");
+  mkToggle("unstaged", "更改");
+  mkToggle("untracked", "未跟踪");
+  menu.addEventListener("click", (ev) => ev.stopPropagation());
+  filterWrap.appendChild(filterBtn);
+  filterWrap.appendChild(menu);
+  top.appendChild(filterWrap);
+
+  const refresh = document.createElement("button");
+  refresh.type = "button";
+  refresh.textContent = "↻ 刷新";
+  refresh.title = "重新加载未提交改动";
+  refresh.addEventListener("click", (ev) => { ev.stopPropagation(); refreshWorkdir(); });
+  top.appendChild(refresh);
+  // clicking anywhere else on the bar folds/unfolds the whole panel (like a branch group)
+  top.addEventListener("click", () => {
+    WD_FOLDED = !WD_FOLDED;
+    panel.classList.toggle("folded", WD_FOLDED);
+  });
+  panel.appendChild(top);
+
+  const body = document.createElement("div");
+  body.className = "wd-body";
+  panel.appendChild(body);
+  panel.classList.toggle("folded", WD_FOLDED);
+  renderWdGroups(body);
+}
+
+/** Render the three groups (staged / changes / untracked) into the panel body. */
+function renderWdGroups(body) {
+  body.innerHTML = "";
+  const ws = WORKSTATUS;
   const total = ws.counts.staged + ws.counts.unstaged + ws.counts.untracked;
   if (!total) {
-    const empty = document.createElement("div");
-    empty.className = "wd-empty";
-    empty.textContent = "✓ 工作区干净";
-    mb.appendChild(empty);
+    const clean = document.createElement("div");
+    clean.className = "wd-clean";
+    clean.textContent = "✓ 工作区干净";
+    body.appendChild(clean);
     return;
   }
 
   const groups = [
-    { title: "已暂存", items: ws.staged, staged: "1" },
-    { title: "更改", items: ws.unstaged, staged: "0" },
-    { title: "未跟踪", items: ws.untracked.map((f) => ({ path: f.path, code: "?" })), staged: "untracked" }
+    { key: "staged", title: "已暂存", items: ws.staged, staged: "1" },
+    { key: "unstaged", title: "更改", items: ws.unstaged, staged: "0" },
+    { key: "untracked", title: "未跟踪", items: ws.untracked.map((f) => ({ path: f.path, code: "?" })), staged: "untracked" }
   ];
   for (const g of groups) {
-    if (!g.items.length) continue;
+    if (!WD_SHOW[g.key] || !g.items.length) continue;
     const wrap = document.createElement("div");
-    wrap.className = "wd-group";
+    wrap.className = "wd-group" + (WD_GROUP_FOLDED.has(g.key) ? " folded" : "");
     const gh = document.createElement("div");
     gh.className = "wd-head";
+    const gcaret = document.createElement("span");
+    gcaret.className = "wd-caret";
+    gcaret.textContent = "▶";
+    gh.appendChild(gcaret);
     gh.appendChild(document.createTextNode(g.title));
     const gn = document.createElement("span");
     gn.className = "wd-n";
     gn.textContent = "(" + g.items.length + ")";
     gh.appendChild(gn);
+    gh.addEventListener("click", () => {
+      if (WD_GROUP_FOLDED.has(g.key)) WD_GROUP_FOLDED.delete(g.key);
+      else WD_GROUP_FOLDED.add(g.key);
+      wrap.classList.toggle("folded");
+    });
     wrap.appendChild(gh);
     for (const it of g.items) {
       const row = document.createElement("div");
@@ -1266,7 +1382,7 @@ function renderWorkdir() {
       });
       wrap.appendChild(row);
     }
-    mb.appendChild(wrap);
+    body.appendChild(wrap);
   }
 }
 
@@ -1298,36 +1414,30 @@ async function loadWdFile(item, staged, pre) {
   }
 }
 
-$("mClose").addEventListener("click", () => $("modalMask").classList.remove("show"));
-$("mRefresh").addEventListener("click", openStatus);
-$("modalMask").addEventListener("click", (ev) => { if (ev.target === $("modalMask")) $("modalMask").classList.remove("show"); });
-
 /* ===================== status line ===================== */
-async function loadStatus() {
-  try {
-    const ws = await api("workstatus");
-    if (!ws.ok) return;
-    WORKSTATUS = ws;
-    const el = $("statusLine");
-    el.innerHTML = "";
-    const b = document.createElement("span");
-    b.className = "branch";
-    b.textContent = "分支: " + (ws.branch || "?");
-    el.appendChild(b);
-    const total = ws.counts.staged + ws.counts.unstaged + ws.counts.untracked;
-    if (total > 0) {
-      const dirty = document.createElement("span");
-      dirty.className = "dirty";
-      dirty.textContent = `◌ 未提交改动：已暂存 ${ws.counts.staged} · 更改 ${ws.counts.unstaged} · 未跟踪 ${ws.counts.untracked}`;
-      dirty.addEventListener("click", openStatus);
-      el.appendChild(dirty);
-    } else {
-      const clean = document.createElement("span");
-      clean.className = "clean";
-      clean.textContent = "✓ 工作区干净";
-      el.appendChild(clean);
-    }
-  } catch { /* ignore */ }
+function renderStatusLine() {
+  const ws = WORKSTATUS;
+  const el = $("statusLine");
+  el.innerHTML = "";
+  const b = document.createElement("span");
+  b.className = "branch";
+  b.textContent = "分支: " + (ws.branch || "?");
+  el.appendChild(b);
+  const total = ws.counts.staged + ws.counts.unstaged + ws.counts.untracked;
+  if (total > 0) {
+    const dirty = document.createElement("span");
+    dirty.className = "dirty";
+    dirty.textContent = `◌ 未提交改动：已暂存 ${ws.counts.staged} · 更改 ${ws.counts.unstaged} · 未跟踪 ${ws.counts.untracked}`;
+    dirty.addEventListener("click", () => {
+      $("wdPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    el.appendChild(dirty);
+  } else {
+    const clean = document.createElement("span");
+    clean.className = "clean";
+    clean.textContent = "✓ 工作区干净";
+    el.appendChild(clean);
+  }
 }
 
 /* ===================== load ===================== */
@@ -1360,6 +1470,7 @@ function showEmpty(ws) {
   $("detail").classList.remove("open");
   COMMITS = [];
   BRANCHES = [];
+  $("wdPanel").innerHTML = "";
   $("commitList").innerHTML = "";
   $("legend").innerHTML = "";
   $("repoLabel").textContent = "—";
@@ -1414,7 +1525,7 @@ async function load() {
     KEY_IDX = 0;
     $("detail").classList.remove("open");
     render();
-    loadStatus();
+    refreshWorkdir();
     if (COMMITS.length) {
       setTimeout(() => scrollToNode(COMMITS[0].hash), 120);
     }
@@ -1485,11 +1596,14 @@ $("btnFilter").addEventListener("click", (ev) => {
 });
 document.addEventListener("click", (ev) => {
   if (!ev.target.closest(".filterWrap")) $("filterMenu").classList.remove("show");
+  if (!ev.target.closest(".wd-filterWrap")) {
+    const m = document.querySelector(".wd-menu.show");
+    if (m) m.classList.remove("show");
+  }
 });
 
 /* ===================== events ===================== */
 $("btnRefresh").addEventListener("click", load);
-$("btnStatus").addEventListener("click", openStatus);
 
 let searchTimer = null;
 $("searchBox").addEventListener("input", (ev) => {
@@ -1563,7 +1677,6 @@ function kbdVisibleList() {
 }
 window.addEventListener("keydown", (ev) => {
   if (ev.key === "Escape") {
-    if ($("modalMask").classList.contains("show")) { $("modalMask").classList.remove("show"); return; }
     if ($("ctxMenu").classList.contains("show")) { hideContextMenu(); return; }
     if ($("detail").classList.contains("open")) { $("dClose").click(); return; }
   }

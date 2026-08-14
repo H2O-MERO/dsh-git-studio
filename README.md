@@ -2,9 +2,15 @@
 
 🌏 中文 · [English](./README_EN.md)
 
+> 🧭 **一句话定位：DSH 生态里开箱即用的 Git 可视化工具。** 在 DeepSeek Harness 对话界面内直接嵌入 GitHub 风格的提交历史图、分支管理、代码 Diff 与 VSCode 风格未提交改动面板——AI 开发时不用再切到别的 Git 客户端。
+
 DeepSeek Harness（DSH）Web GUI 的嵌入式 Git 仓库图谱可视化插件。
 
-在对话界面里直接查看、浏览、管理 git 仓库：提交历史图、分支过滤、提交详情、文件 diff、工作区状态、右键 git 操作，全部内嵌在 harness 界面中，无需离开当前对话。
+在对话界面里直接查看、浏览、管理 git 仓库：提交历史图、分支过滤、提交详情、文件 diff、工作区状态、右键 git 操作，全部内嵌在 harness 界面中，无需离开当前对话。提交图一目了然，未提交改动像 VSCode 一样分组展示，一眼看清"改了什么、谁改的、要不要提交"。
+
+**适合谁**：用 DeepSeek Harness / DSH 做 AI 编程、Agent 开发的开发者；想在同一个界面里同时看清提交历史、分支、工作区改动的 Git 用户；需要比命令行更直观的 Git 可视化工具的开发者与团队。
+
+> 🔍 搜索关键词：DSH 插件 · DeepSeek Harness 插件 · Git 可视化 · Git 图谱 · 提交历史图 · 分支管理 · 代码 Diff · VSCode 风格改动面板 · Git 效率工具 · AI 编程助手
 
 > 🛠 本项目由 AI 辅助开发（AI-assisted development）。
 

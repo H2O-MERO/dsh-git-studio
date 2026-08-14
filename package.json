@@ -1,0 +1,23 @@
+{
+  "name": "dsh-git-graph",
+  "version": "0.3.0",
+  "description": "Embedded git repository graph visualizer for the DeepSeek Harness web GUI",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "inject": [
+        "slots"
+      ],
+      "platform": "web"
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

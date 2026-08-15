@@ -215,6 +215,16 @@
     font-size: 11.5px; color: var(--text2);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
+  /* incremental loading footer (renders 40 commits per group) */
+  .gg-more {
+    margin: 6px 12px 0; padding: 8px 12px;
+    border: 1px dashed var(--border); border-radius: 8px;
+    color: var(--text2); font-size: 12px; text-align: center;
+    cursor: pointer; user-select: none;
+  }
+  .gg-more:hover { border-color: var(--accent); color: var(--accent); background: var(--bg2); }
+  .gg-more.done { border-style: solid; color: var(--text3); cursor: default; }
+  .gg-more.done:hover { border-color: var(--border); color: var(--text3); background: transparent; }
   #legend {
     position: sticky; top: 8px; left: 8px;
     display: flex; flex-wrap: wrap; gap: 4px 10px;
@@ -787,7 +797,17 @@ function buildRows() {
   return rows;
 }
 
+/* Incremental render: commit rows are appended in groups of PAGE_SIZE (40).
+ * The first group paints synchronously so the list appears immediately, then
+ * further groups load as the user scrolls (or automatically until the viewport
+ * is filled). Huge histories no longer build every row at once. */
+const PAGE_SIZE = 40;      // commits rendered per group
+let RENDER_STATE = null;   // {rows, map, vis, hlSet, kbdHash, more, total, shown, next, commitRows, prevCommitEl, done, list}
+let fillRafId = 0;
+
 function render() {
+  cancelAnimationFrame(fillRafId);
+  fillRafId = 0;
   BRANCH_COLOR_CACHE = null;
   const map = byHash();
   const vis = visibleSet();
@@ -797,49 +817,131 @@ function render() {
   list.innerHTML = "";
 
   const kbdHash = KEY_IDX >= 0 && KEY_IDX < COMMITS.length ? COMMITS[KEY_IDX].hash : null;
-  const commitRows = [];
-  let prevCommitEl = null;
-  const firstCommitEl = null;
 
-  // gather visible commit hashes in row order (for keyboard nav + line joining)
-  const visibleCommits = ROWS.filter((r) => r.type === "commit" && !(vis && !vis.has(r.hash)) && !(hlSet && !hlSet.has(r.hash)));
-
-  for (let i = 0; i < ROWS.length; i++) {
-    const r = ROWS[i];
-    if (r.type === "head") {
-      // hide the whole group when its branch is filtered out
-      if (vis && !vis.has(r.tip)) continue;
-      list.appendChild(buildHeadRow(r, vis, hlSet));
-      continue;
-    }
+  // count visible commit rows (drives the progress footer)
+  let total = 0;
+  for (const r of ROWS) {
+    if (r.type !== "commit") continue;
     const c = map.get(r.hash);
     if (!c) continue;
-    const hidden = (vis && !vis.has(c.hash)) || (hlSet && !hlSet.has(c.hash));
-    if (hidden) continue;
-    const row = buildCommitRow(c, hidden, kbdHash === c.hash, vis, hlSet);
-    list.appendChild(row);
-    commitRows.push(row);
-    if (prevCommitEl) prevCommitEl.classList.remove("last");
-    row.classList.add("last");
-    prevCommitEl = row;
-  }
-  // line joining: each row's graph line connects to the previous visible commit
-  for (let i = 0; i < commitRows.length; i++) {
-    const row = commitRows[i];
-    if (i === 0) row.classList.add("first");
-    if (commitRows.length === 1) row.classList.add("solo");
+    if (vis && !vis.has(c.hash)) continue;
+    if (hlSet && !hlSet.has(c.hash)) continue;
+    total++;
   }
 
-  // strict filter: every branch unchecked -> empty list with a hint
-  if (vis && vis.size === 0) {
-    const hint = document.createElement("div");
-    hint.style.cssText = "color:var(--text3);text-align:center;padding:26px 0 18px;font-size:12.5px";
-    hint.textContent = "未选择任何分支 —— 在 ☑ 分支过滤 中勾选要显示的分支";
-    list.appendChild(hint);
+  const st = {
+    rows: ROWS, map, vis, hlSet, kbdHash, more: null,
+    total, shown: 0, next: 0,
+    commitRows: [], prevCommitEl: null,
+    done: false, list,
+  };
+  RENDER_STATE = st;
+
+  if (st.total > 0) {
+    st.more = document.createElement("div");
+    st.more.className = "gg-more";
+    st.more.title = "点击立即加载下一组 40 个提交";
+    st.more.addEventListener("click", () => {
+      if (RENDER_STATE && !RENDER_STATE.done) appendChunk();
+    });
+    list.appendChild(st.more);
   }
+
+  appendChunk();   // first group: synchronous, so the page paints immediately
+  scheduleFill();  // then keep appending until the viewport is covered
 
   renderLegend();
 }
+
+/** Append the next group of up to PAGE_SIZE visible commits to the list. */
+function appendChunk() {
+  const st = RENDER_STATE;
+  if (!st || st.done) return false;
+  const frag = document.createDocumentFragment();
+  let added = 0;
+  while (st.next < st.rows.length && added < PAGE_SIZE) {
+    const r = st.rows[st.next++];
+    if (r.type === "head") {
+      // hide the whole group when its branch is filtered out
+      if (st.vis && !st.vis.has(r.tip)) continue;
+      frag.appendChild(buildHeadRow(r, st.vis, st.hlSet));
+      continue;
+    }
+    const c = st.map.get(r.hash);
+    if (!c) continue;
+    if ((st.vis && !st.vis.has(c.hash)) || (st.hlSet && !st.hlSet.has(c.hash))) continue;
+    const row = buildCommitRow(c, false, st.kbdHash === c.hash, st.vis, st.hlSet);
+    // line joining: each row's graph line connects to the previous visible commit
+    if (st.commitRows.length === 0) row.classList.add("first", "solo");
+    else if (st.commitRows.length === 1) st.commitRows[0].classList.remove("solo");
+    if (st.prevCommitEl) st.prevCommitEl.classList.remove("last");
+    row.classList.add("last");
+    frag.appendChild(row);
+    st.commitRows.push(row);
+    st.prevCommitEl = row;
+    st.shown++;
+    added++;
+  }
+  if (frag.childNodes.length) st.list.insertBefore(frag, st.more);
+  if (st.next >= st.rows.length) {
+    st.done = true;
+    // strict filter: every branch unchecked -> empty list with a hint
+    if (st.commitRows.length === 0 && st.vis && st.vis.size === 0) {
+      const hint = document.createElement("div");
+      hint.style.cssText = "color:var(--text3);text-align:center;padding:26px 0 18px;font-size:12.5px";
+      hint.textContent = "未选择任何分支 —— 在 ☑ 分支过滤 中勾选要显示的分支";
+      st.list.appendChild(hint);
+    }
+  }
+  if (st.more) {
+    st.more.textContent = st.done
+      ? `已显示全部 ${st.shown} 个提交 ✓`
+      : `已显示 ${st.shown} / ${st.total} 个提交 · 向下滚动继续加载`;
+    st.more.classList.toggle("done", st.done);
+  }
+  scheduleFill();
+  return added > 0;
+}
+
+/** Keep appending groups (one per frame) until the list covers the viewport. */
+function scheduleFill() {
+  if (fillRafId || !RENDER_STATE) return;
+  fillRafId = requestAnimationFrame(() => {
+    fillRafId = 0;
+    const st = RENDER_STATE;
+    if (!st || st.done) return;
+    const el = $("graphWrap");
+    if (el.scrollHeight - el.scrollTop >= el.clientHeight * 2) return;
+    appendChunk();
+    scheduleFill();
+  });
+}
+
+/** Render groups until the row for `hash` exists (keyboard nav / scroll targets). */
+function ensureRendered(hash) {
+  const st = RENDER_STATE;
+  if (!st || st.done) return;
+  let guard = 0;
+  while (!st.done && guard++ < 500) {
+    if (st.list.querySelector(`.cl-row[data-hash="${hash}"]`)) return;
+    appendChunk();
+  }
+}
+
+/* ---- infinite scroll: append the next group near the bottom ---- */
+let scrollTick = false;
+$("graphWrap").addEventListener("scroll", () => {
+  if (scrollTick) return;
+  scrollTick = true;
+  requestAnimationFrame(() => {
+    scrollTick = false;
+    const st = RENDER_STATE;
+    if (!st || st.done) return;
+    const el = $("graphWrap");
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 800) appendChunk();
+  });
+});
+window.addEventListener("resize", scheduleFill);
 
 function buildCommitRow(c, hidden, isKbd, vis, hlSet) {
   const row = document.createElement("div");
@@ -1061,6 +1163,7 @@ async function selectCommit(hash, scroll = false) {
   }
 }
 function scrollToNode(hash) {
+  ensureRendered(hash);
   const row = $("commitList").querySelector(`.cl-row[data-hash="${hash}"]`);
   if (row) row.scrollIntoView({ behavior: "smooth", block: "center" });
 }
@@ -1462,6 +1565,9 @@ async function resolveSessionWs() {
 
 /** 当前对话不是 git 仓库：显示空态，不显示图谱。 */
 function showEmpty(ws) {
+  cancelAnimationFrame(fillRafId);
+  fillRafId = 0;
+  RENDER_STATE = null;
   $("loading").classList.add("hidden");
   const notice = $("wsNotice");
   notice.classList.remove("show");
@@ -1483,6 +1589,10 @@ function hideEmpty() {
 }
 
 async function load() {
+  // reset any pending incremental rendering from a previous load
+  cancelAnimationFrame(fillRafId);
+  fillRafId = 0;
+  RENDER_STATE = null;
   $("loading").classList.remove("hidden");
   hideEmpty();
   try {

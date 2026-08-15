@@ -1,4 +1,4 @@
-# dsh-git-graph
+# dsh-git-studio
 
 > 🧭 **A ready-to-use git visualizer for the DSH ecosystem.** An embedded git tool for the DeepSeek Harness (DSH) Web GUI: GitHub-style commit graph, branch management, code diffs, and a VSCode-style uncommitted changes panel — all inside your AI session, no need to switch to another git client.
 
@@ -38,12 +38,12 @@ Edit your DSH web profile's `package.json` and add the dependency:
 ```json
 {
   "dependencies": {
-    "dsh-git-graph": "file:./plugins/git-graph"
+    "dsh-git-studio": "file:./plugins/git-studio"
   }
 }
 ```
 
-(`plugins/git-graph` is the directory containing this plugin source; adjust the path as needed.)
+(`plugins/git-studio` is the directory containing this plugin source; adjust the path as needed.)
 
 ### 2. Mount the bundle
 
@@ -51,8 +51,8 @@ Add the following to the profile's `cordis.patch.yml`:
 
 ```yaml
 - insert:
-    - id: git-graph
-      name: dsh-git-graph
+    - id: git-studio
+      name: dsh-git-studio
       config:
         repo: "C:/path/to/your/repo"
 ```
@@ -84,7 +84,7 @@ Open http://127.0.0.1:3080 and select the **Git 图谱** tab in any session.
 ## 🛠️ Development
 
 ```
-git-graph/
+git-studio/
 ├── index.js          # Server half: git API (graph/branches/workstatus/workfile/diff/...)
 ├── client.js         # Client half: "Git 图谱" session tab
 ├── web/index.html    # The graph page (standalone page inside an iframe)
@@ -93,10 +93,10 @@ git-graph/
 └── cordis.patch.yml  # Profile mount point
 ```
 
-After editing, sync to your DSH deployment directory (`node_modules/dsh-git-graph/`):
+After editing, sync to your DSH deployment directory (`node_modules/dsh-git-studio/`):
 
 ```powershell
-.\sync-deploy.ps1 -Dst C:\path\to\your\.dsh\profiles\web\node_modules\dsh-git-graph
+.\sync-deploy.ps1 -Dst C:\path\to\your\.dsh\profiles\web\node_modules\dsh-git-studio
 ```
 
 Server (`index.js`) and client (`client.js`) changes require a dsh web restart; `web/index.html` changes take effect after a page refresh. See `AGENTS.md` for full development conventions.

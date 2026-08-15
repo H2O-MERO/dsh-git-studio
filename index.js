@@ -1,4 +1,4 @@
-// dsh-git-graph — server half
+// dsh-git-studio — server half
 // Registers HTTP routes under /git-graph:
 //   GET /git-graph/api?op=<op>&repo=<path>[&hash=<sha>]  -> JSON git data
 //   GET /git-graph/index.html                           -> the visualizer page
@@ -14,7 +14,7 @@ const webRoot = join(here, 'web')
 const MAX_GIT_BUFFER = 32 * 1024 * 1024
 const MAX_DIFF_CHARS = 240000
 
-export const name = 'git-graph'
+export const name = 'git-studio'
 export const inject = ['webServer']
 
 function runGit(repo, args, maxBuffer = MAX_GIT_BUFFER) {

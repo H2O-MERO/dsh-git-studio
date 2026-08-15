@@ -1,10 +1,10 @@
-# AGENTS.md — dsh-git-graph 开发指南
+# AGENTS.md — dsh-git-studio 开发指南
 
 本文件面向在本仓库中工作的 AI 代理与人类开发者，说明项目结构、开发流程与约定。
 
 ## 项目是什么
 
-dsh-git-graph 是 DeepSeek Harness (DSH) Web GUI 的嵌入式 Git 仓库图谱可视化插件：
+dsh-git-studio 是 DeepSeek Harness (DSH) Web GUI 的嵌入式 Git 仓库图谱可视化插件：
 
 - **会话页「Git 图谱」标签**：注册到 `conversation.view` 插槽，iframe 内嵌独立页面（`web/index.html`）
 - **服务端只读 git API**：`execFile` 固定参数执行（无 shell），仓库路径白名单 + 会话工作区发现
@@ -17,7 +17,7 @@ dsh-git-graph 是 DeepSeek Harness (DSH) Web GUI 的嵌入式 Git 仓库图谱�
 ├── client.js         # 客户端（浏览器半）：注册 conversation.view 标签 + shell.overlay 右侧未提交改动模块
 ├── web/index.html    # 图谱页面（iframe 独立页，全部逻辑内联 <script>）
 ├── package.json      # npm 清单（dsh.client.inject + dsh.bundle.patch）
-├── dsh.plugin.json   # DSH 官方插件清单（id: dsh-external/dsh-git-graph）
+├── dsh.plugin.json   # DSH 官方插件清单（id: dsh-external/dsh-git-studio）
 ├── cordis.patch.yml  # profile 挂载点（config.repo 为仓库白名单，示例路径）
 ├── sync-deploy.ps1   # 同步到本地 DSH 部署目录（-Dst 参数 / $env:DSH_GIT_GRAPH_DST）
 ├── assets/           # README 演示截图

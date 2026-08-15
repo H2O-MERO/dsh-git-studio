@@ -1601,7 +1601,7 @@ async function load() {
     const ws = SESSION_WS;
     const repos = await api("repos", ws ? { ws } : {});
     if (!repos.ok || !repos.repos.length) {
-      $("loading").textContent = "未配置仓库：请在 cordis.patch.yml 的 git-graph config.repo 中填写仓库路径";
+      $("loading").textContent = "未配置仓库：请在 cordis.patch.yml 的 git-studio config.repo 中填写仓库路径";
       return;
     }
     // 当前对话的目录不是 git 仓库 → 不显示图谱（不回落配置仓库）

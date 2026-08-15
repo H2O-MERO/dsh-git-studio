@@ -1,5 +1,5 @@
 window.__ModuleLoader__.load({
-	id: "dsh-git-graph",
+	id: "dsh-git-studio",
 	factory: (require) => {
 		var module = { exports: {} };
 		var exports = module.exports;
@@ -76,10 +76,10 @@ window.__ModuleLoader__.load({
 			".gg-wd-rail:hover{color:var(--dsw-alias-label-primary, #e8edf2)}",
 			".gg-wd-rail span{writing-mode:vertical-rl;font-size:11px;letter-spacing:2px;white-space:nowrap}"
 		].join("");
-		const tagId = "dsh-git-graph/style";
+		const tagId = "dsh-git-studio/style";
 		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId) + "]") === null) {
 			const tag = document.createElement("style");
-			tag.dataset.plugin = "dsh-git-graph";
+			tag.dataset.plugin = "dsh-git-studio";
 			tag.dataset.pluginCss = tagId;
 			tag.textContent = css;
 			document.head.appendChild(tag);
@@ -218,7 +218,7 @@ window.__ModuleLoader__.load({
 					const repos = await api("repos", cwd ? { ws: cwd } : {});
 					if (seq !== loadSeq.current) return;
 					if (!repos.ok || !repos.repos.length) {
-						setError("未配置仓库：请在 cordis.patch.yml 的 git-graph config.repo 中填写仓库路径");
+						setError("未配置仓库：请在 cordis.patch.yml 的 git-studio config.repo 中填写仓库路径");
 						return;
 					}
 					const r = repos.wsRoot || repos.current || repos.repos[0];
@@ -421,13 +421,13 @@ window.__ModuleLoader__.load({
 		function apply(ctx) {
 			ctx.slots.inject("conversation.view", () => ctx.slots.register({
 				name: "conversation.view",
-				id: "git-graph",
+				id: "git-studio",
 				order: 20,
 				label: () => "Git 图谱"
 			}, GitGraphView));
 			ctx.slots.inject("shell.overlay", () => ctx.slots.register({
 				name: "shell.overlay",
-				id: "git-graph-workdir",
+				id: "git-studio-workdir",
 				order: 50
 			}, WorkdirPanel));
 		}

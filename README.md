@@ -1,4 +1,4 @@
-# dsh-git-graph
+# dsh-git-studio
 
 🌏 中文 · [English](./README_EN.md)
 
@@ -44,12 +44,12 @@ DeepSeek Harness（DSH）Web GUI 的嵌入式 Git 仓库图谱可视化插件。
 ```json
 {
   "dependencies": {
-    "dsh-git-graph": "file:./plugins/git-graph"
+    "dsh-git-studio": "file:./plugins/git-studio"
   }
 }
 ```
 
-（`plugins/git-graph` 为本插件源码所在目录，按实际路径调整。）
+（`plugins/git-studio` 为本插件源码所在目录，按实际路径调整。）
 
 ### 2. 挂载 bundle
 
@@ -57,8 +57,8 @@ DeepSeek Harness（DSH）Web GUI 的嵌入式 Git 仓库图谱可视化插件。
 
 ```yaml
 - insert:
-    - id: git-graph
-      name: dsh-git-graph
+    - id: git-studio
+      name: dsh-git-studio
       config:
         repo: "C:/path/to/your/repo"
 ```
@@ -90,7 +90,7 @@ pnpm install
 ## 🛠️ 开发
 
 ```
-git-graph/
+git-studio/
 ├── index.js          # 服务端：git API（graph/branches/workstatus/workfile/diff/...）
 ├── client.js         # 客户端插件：会话页「Git 图谱」标签
 ├── web/index.html    # 图谱界面（iframe 内独立页面）
@@ -98,7 +98,7 @@ git-graph/
 └── cordis.patch.yml  # profile 挂载点
 ```
 
-修改后同步到 DSH 部署目录（`node_modules/dsh-git-graph/`）：
+修改后同步到 DSH 部署目录（`node_modules/dsh-git-studio/`）：
 
 ```powershell
 .\sync-deploy.ps1

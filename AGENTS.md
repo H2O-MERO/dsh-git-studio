@@ -8,13 +8,13 @@ dsh-git-graph 是 DeepSeek Harness (DSH) Web GUI 的嵌入式 Git 仓库图谱�
 
 - **会话页「Git 图谱」标签**：注册到 `conversation.view` 插槽，iframe 内嵌独立页面（`web/index.html`）
 - **服务端只读 git API**：`execFile` 固定参数执行（无 shell），仓库路径白名单 + 会话工作区发现
-- **未提交改动**：图谱顶部常驻区块（`#wdPanel`），VSCode 风格分组文件列表 + 按需加载单文件 diff
+- **未提交改动**：图谱顶部常驻区块（`#wdPanel`，VSCode 风格分组文件列表 + 按需加载单文件 diff）+ 对话页右侧独立模块（注册到 `shell.overlay` 插槽，可拖宽、折叠态不渲染不请求）
 
 ## 目录结构
 
 ```
 ├── index.js          # 服务端（Host 半）：注册 /git-graph 前缀路由
-├── client.js         # 客户端（浏览器半）：仅注册 conversation.view 标签
+├── client.js         # 客户端（浏览器半）：注册 conversation.view 标签 + shell.overlay 右侧未提交改动模块
 ├── web/index.html    # 图谱页面（iframe 独立页，全部逻辑内联 <script>）
 ├── package.json      # npm 清单（dsh.client.inject + dsh.bundle.patch）
 ├── dsh.plugin.json   # DSH 官方插件清单（id: dsh-external/dsh-git-graph）

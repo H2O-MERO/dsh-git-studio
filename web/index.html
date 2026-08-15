@@ -731,6 +731,7 @@ function visibleSet() {
 
 /* ===== branch-group rows: each branch (incl. the HEAD mainline) gets a foldable group header ===== */
 let BRANCH_FOLDED = new Set(); // refnames of collapsed branch groups
+let branchFoldInitialized = false; // set once after first load: default every group folded
 function buildRows() {
   const rows = []; // {type:'commit', hash} | {type:'head', refname, name, tip, count, head?}
   const seen = new Set();
@@ -1630,6 +1631,12 @@ async function load() {
     COMMITS = graph.commits;
     BRANCHES = branches.ok ? branches.branches.map(normalizeBranch) : [];
     BRANCH_COLOR_CACHE = null;
+    // 默认折叠所有分支分组（含 HEAD）：只显示分组头，不渲染该组提交行；
+    // 点击组头才展开并增量加载该组提交。仅首次加载设置，之后尊重用户的手动展开/折叠。
+    if (!branchFoldInitialized) {
+      branchFoldInitialized = true;
+      for (const b of BRANCHES) BRANCH_FOLDED.add(b.refname);
+    }
     fillFilterMenu();
     SELECTED = null;
     KEY_IDX = 0;

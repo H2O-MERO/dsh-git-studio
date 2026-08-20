@@ -374,6 +374,8 @@
     font-family: Consolas, monospace; font-size: 12px;
   }
   #wdPanel .wd-old { color: var(--text3); text-decoration: line-through; }
+  #wdPanel .wd-path .wd-name { color: var(--text); }
+  #wdPanel .wd-path .wd-dir { opacity: .55; color: var(--text2); }
   #wdPanel .wd-counts { flex: none; font-size: 11px; font-family: Consolas, monospace; }
   #wdPanel .wd-counts .add { color: var(--green); }
   #wdPanel .wd-counts .del { color: var(--red); }
@@ -386,6 +388,16 @@
     overflow: auto; font: 11.5px/1.6 Consolas, "Courier New", monospace;
     color: var(--text); white-space: pre; max-height: 420px;
   }
+  #wdPanel .wd-diff pre .wd-dl { display: block; }
+  #wdPanel .wd-diff pre .wd-dl.add,
+  #wdPanel .wd-diff pre .wd-dl.del { margin: 0 -12px; padding: 0 12px; }
+  #wdPanel .wd-diff pre .wd-dl.add { background: rgba(63,185,80,.16); color: var(--green); }
+  #wdPanel .wd-diff pre .wd-dl.del { background: rgba(248,81,73,.16); color: var(--red); }
+  #wdPanel .wd-diff pre .wd-dl.hunk { background: rgba(88,166,255,.08); color: var(--text2); }
+  #wdPanel .wd-diff-tools { display: flex; align-items: center; gap: 8px; padding: 6px 10px 0; }
+  #wdPanel .wd-diff-tools .wd-open-btn { height: 22px; padding: 0 10px; border: 1px solid var(--border); background: var(--bg2); color: var(--text); border-radius: 6px; cursor: pointer; font-size: 11px; }
+  #wdPanel .wd-diff-tools .wd-open-btn:hover { border-color: var(--text3); background: var(--bg4); }
+  #wdPanel .wd-diff-tools .wd-open-err { font-size: 11px; color: var(--red); }
   /* --- status line --- */
   #statusLine {
     height: 32px; flex: none;
@@ -503,7 +515,7 @@ let REPO = null;
 let COMMITS = [];          // [{hash, parents[], author, email, date, subject, refs[]}]
 let BRANCHES = [];         // [{refname, kind, name, sha, head}]
 let WORKSTATUS = null;     // {branch, staged[], unstaged[], untracked[], counts}
-let wdDiffCache = new Map(); // workfile cache: "staged\0path" -> display text
+let wdDiffCache = new Map(); // workfile cache: "staged\0path" -> { text, mode }
 let WD_SHOW = { staged: true, unstaged: true, untracked: true }; // group visibility toggles
 let WD_FOLDED = false;      // whole panel collapsed
 const WD_GROUP_FOLDED = new Set(); // folded group keys (staged/unstaged/untracked)
@@ -1444,8 +1456,21 @@ function renderWdGroups(body) {
       row.appendChild(badge);
       const path = document.createElement("span");
       path.className = "wd-path";
-      path.textContent = it.path;
       path.title = (it.oldPath ? it.oldPath + " → " : "") + it.path;
+      const fullPath = it.path || "";
+      const slashIdx = Math.max(fullPath.lastIndexOf("/"), fullPath.lastIndexOf("\\"));
+      const fileName = slashIdx >= 0 ? fullPath.slice(slashIdx + 1) : fullPath;
+      const dirPath = slashIdx > 0 ? fullPath.slice(0, slashIdx + 1) : "";
+      const name = document.createElement("span");
+      name.className = "wd-name";
+      name.textContent = fileName;
+      path.appendChild(name);
+      if (dirPath) {
+        const dir = document.createElement("span");
+        dir.className = "wd-dir";
+        dir.textContent = " " + dirPath;
+        path.appendChild(dir);
+      }
       if (it.oldPath) {
         const old = document.createElement("span");
         old.className = "wd-old";
@@ -1474,6 +1499,24 @@ function renderWdGroups(body) {
       }
       const diffBox = document.createElement("div");
       diffBox.className = "wd-diff";
+      if (it.code !== "D") {
+        const tools = document.createElement("div");
+        tools.className = "wd-diff-tools";
+        const openBtn = document.createElement("button");
+        openBtn.type = "button";
+        openBtn.className = "wd-open-btn";
+        openBtn.textContent = "打开文件";
+        const errSpan = document.createElement("span");
+        errSpan.className = "wd-open-err";
+        errSpan.style.display = "none";
+        openBtn.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          openLocalFile(it, openBtn, errSpan);
+        });
+        tools.appendChild(openBtn);
+        tools.appendChild(errSpan);
+        diffBox.appendChild(tools);
+      }
       const pre = document.createElement("pre");
       pre.textContent = "加载中…";
       diffBox.appendChild(pre);
@@ -1490,14 +1533,56 @@ function renderWdGroups(body) {
   }
 }
 
+/** Render workdir code/diff with VSCode-style line backgrounds (green add / red delete). */
+function renderWdDiff(pre, text, mode) {
+  pre.textContent = "";
+  if (mode === "none") { pre.textContent = text; return; }
+  const lines = String(text).replace(/\n$/, "").split("\n");
+  for (const line of lines) {
+    const span = document.createElement("span");
+    span.className = "wd-dl";
+    if (mode === "add") {
+      span.classList.add("add");
+    } else {
+      if (line.startsWith("+") && !line.startsWith("+++ ")) span.classList.add("add");
+      else if (line.startsWith("-") && !line.startsWith("--- ")) span.classList.add("del");
+      else if (line.startsWith("@@")) span.classList.add("hunk");
+    }
+    span.textContent = line;
+    pre.appendChild(span);
+  }
+}
+
+/** Ask the server to open a file with the OS default application. */
+async function openLocalFile(item, btn, errEl) {
+  if (btn) { btn.disabled = true; }
+  if (errEl) { errEl.textContent = ""; errEl.style.display = "none"; }
+  try {
+    const res = await api("openfile", { file: item.path });
+    if (!res.ok) {
+      if (errEl) { errEl.textContent = res.error || "打开失败"; errEl.style.display = ""; }
+    }
+  } catch (err) {
+    const msg = err && err.message ? err.message : String(err);
+    if (errEl) { errEl.textContent = msg; errEl.style.display = ""; }
+  } finally {
+    if (btn) { btn.disabled = false; }
+  }
+}
+
 /** Load one file's diff (or content for untracked) on demand; cached. */
 async function loadWdFile(item, staged, pre) {
   const key = staged + "\u0000" + item.path;
   const cached = wdDiffCache.get(key);
-  if (cached) { pre.textContent = cached; return; }
+  if (cached) {
+    if (typeof cached === "string") renderWdDiff(pre, cached, "none");
+    else renderWdDiff(pre, cached.text, cached.mode || "none");
+    return;
+  }
   try {
     const res = await api("workfile", { file: item.path, staged, ...(item.oldPath ? { old: item.oldPath } : {}) });
     let text;
+    let mode = "none";
     if (!res.ok) {
       text = "加载失败: " + (res.error || "?");
     } else if (res.isDir) {
@@ -1506,13 +1591,15 @@ async function loadWdFile(item, staged, pre) {
       text = "（二进制文件，不显示内容）";
     } else if (res.content !== undefined) {
       text = res.content.trim() ? res.content : "（空文件）";
+      mode = "add";
       if (res.truncated) text = "（内容过长已截断）\n" + text;
     } else {
       text = res.diff || "（无差异）";
+      mode = "diff";
       if (res.truncated) text = "（diff 过长已截断）\n" + text;
     }
-    wdDiffCache.set(key, text);
-    pre.textContent = text;
+    wdDiffCache.set(key, { text, mode });
+    renderWdDiff(pre, text, mode);
   } catch (err) {
     pre.textContent = "加载失败: " + err.message;
   }

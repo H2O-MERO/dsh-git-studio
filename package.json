@@ -1,6 +1,6 @@
 {
   "name": "dsh-git-studio",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "DSH plugin: embedded git repository graph visualizer for the DeepSeek Harness web GUI — commit history graph, branch filtering, code diffs, VSCode-style uncommitted changes panel",
   "type": "module",
   "main": "index.js",

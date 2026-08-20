@@ -30,6 +30,19 @@ function runGit(repo, args, maxBuffer = MAX_GIT_BUFFER) {
   })
 }
 
+/** Open a local file with the OS default application (server-side, no shell). */
+function openLocalFile(file) {
+  return new Promise((resolve, reject) => {
+    const isWin = process.platform === 'win32'
+    const cmd = isWin ? 'cmd' : process.platform === 'darwin' ? 'open' : 'xdg-open'
+    const args = isWin ? ['/c', 'start', '', file] : [file]
+    execFile(cmd, args, { windowsHide: true }, (err) => {
+      if (err) reject(err)
+      else resolve()
+    })
+  })
+}
+
 async function isGitRepo(repo) {
   try {
     const out = await runGit(repo, ['rev-parse', '--is-inside-work-tree'])
@@ -354,6 +367,36 @@ export function apply(ctx, config = {}) {
             const out = await runGit(repo, args).catch(() => '')
             const truncated = out.length > MAX_DIFF_CHARS
             sendJson({ ok: true, diff: truncated ? out.slice(0, MAX_DIFF_CHARS) : out, truncated })
+            break
+          }
+          case 'openfile': {
+            const file = url.searchParams.get('file')
+            if (!file) {
+              sendJson({ ok: false, error: 'missing-file' }, 400)
+              return
+            }
+            const fullNative = resolve(repo, file)
+            const full = fullNative.replace(/\\/g, '/')
+            const base = repo.replace(/\\/g, '/')
+            if (full !== base && !full.startsWith(base + '/')) {
+              sendJson({ ok: false, error: 'path-outside-repo' }, 400)
+              return
+            }
+            let st
+            try { st = statSync(fullNative) } catch {
+              sendJson({ ok: false, error: 'file-not-found', file }, 404)
+              return
+            }
+            if (!st.isFile()) {
+              sendJson({ ok: false, error: 'not-a-file' }, 400)
+              return
+            }
+            try {
+              await openLocalFile(fullNative)
+              sendJson({ ok: true })
+            } catch (err) {
+              sendJson({ ok: false, error: String((err && err.message) || err) }, 500)
+            }
             break
           }
           case 'show': {

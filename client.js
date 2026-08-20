@@ -59,12 +59,22 @@ window.__ModuleLoader__.load({
 			".gg-wd-path{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--dsw-font-mono, Consolas, monospace);",
 			"font-size:12px;color:var(--dsw-alias-label-primary, #e8edf2)}",
 			".gg-wd-old{color:var(--dsw-alias-label-tertiary, #6d7a88);text-decoration:line-through}",
+			".gg-wd-name{color:var(--dsw-alias-label-primary, #e8edf2)}",
+			".gg-wd-dir{opacity:.55;color:var(--dsw-alias-label-secondary, #9aa7b4)}",
 			".gg-wd-num{flex:none;font-size:11px;font-family:var(--dsw-font-mono, Consolas, monospace);color:var(--dsw-alias-label-secondary, #9aa7b4)}",
 			".gg-wd-num .add{color:var(--dsw-alias-state-success-primary, #3fb950)}",
 			".gg-wd-num .del{color:var(--dsw-alias-state-error-primary, #f85149)}",
 			".gg-wd-diff{margin:6px 10px 4px 44px;border:1px solid var(--dsw-alias-border-l2, #2a3542);border-radius:8px;overflow:hidden;background:var(--dsw-alias-bg-base, #0d1117)}",
+			".gg-wd-diff-tools{margin:6px 10px 0 44px;display:flex;align-items:center;gap:8px}",
+			".gg-wd-diff-tools .gg-wd-btn{height:22px;padding:0 10px;font-size:11px}",
+			".gg-wd-diff-tools .gg-wd-open-err{font-size:11px;color:var(--dsw-alias-state-error-primary, #f85149)}",
 			".gg-wd-diff pre{margin:0;padding:10px 12px;overflow:auto;font:11.5px/1.6 var(--dsw-font-mono, Consolas, monospace);",
 			"color:var(--dsw-alias-label-primary, #e8edf2);white-space:pre;max-height:420px}",
+			".gg-wd-dl{display:block}",
+			".gg-wd-dl.add,.gg-wd-dl.del{margin:0 -12px;padding:0 12px}",
+			".gg-wd-dl.add{background:rgba(63,185,80,.16);color:var(--dsw-alias-state-success-primary, #3fb950)}",
+			".gg-wd-dl.del{background:rgba(248,81,73,.16);color:var(--dsw-alias-state-error-primary, #f85149)}",
+			".gg-wd-dl.hunk{background:rgba(88,166,255,.08);color:var(--dsw-alias-label-secondary, #9aa7b4)}",
 			/* left-edge resize handle */
 			".gg-wd-handle{position:absolute;top:0;bottom:0;left:-3px;width:7px;cursor:col-resize;z-index:2}",
 			".gg-wd-handle:hover{background:var(--dsw-alias-state-business-primary, rgba(88,166,255,.5))}",
@@ -119,6 +129,24 @@ window.__ModuleLoader__.load({
 			return res.json();
 		}
 
+		/** Render workdir code/diff with VSCode-style line backgrounds (green add / red delete). */
+		function DiffLines({ text, mode }) {
+			if (text === null || text === undefined) return text;
+			if (mode === "none") return text;
+			const lines = String(text).replace(/\n$/, "").split("\n");
+			return lines.map((line, i) => {
+				let cls = "gg-wd-dl";
+				if (mode === "add") {
+					cls += " add";
+				} else {
+					if (line.startsWith("+") && !line.startsWith("+++ ")) cls += " add";
+					else if (line.startsWith("-") && !line.startsWith("--- ")) cls += " del";
+					else if (line.startsWith("@@")) cls += " hunk";
+				}
+				return react_jsx_runtime.jsx("span", { className: cls, children: line }, i);
+			});
+		}
+
 		/** One file row: badge, path, +/- counts; click expands the on-demand diff (cached). */
 		function WorkdirFile(props) {
 			const item = props.item;
@@ -126,13 +154,43 @@ window.__ModuleLoader__.load({
 			const repo = props.repo;
 			const cache = props.cache;
 			const key = staged + "\u0000" + item.path;
+			const fullPath = item.path || "";
+			const slashIdx = Math.max(fullPath.lastIndexOf("/"), fullPath.lastIndexOf("\\"));
+			const fileName = slashIdx >= 0 ? fullPath.slice(slashIdx + 1) : fullPath;
+			const dirPath = slashIdx > 0 ? fullPath.slice(0, slashIdx + 1) : "";
 			const [open, setOpen] = react.useState(false);
 			const [text, setText] = react.useState(null);
+			const [mode, setMode] = react.useState("none");
+			const [openErr, setOpenErr] = react.useState("");
+			const [opening, setOpening] = react.useState(false);
+
+			const handleOpen = async () => {
+				if (opening) return;
+				setOpenErr("");
+				setOpening(true);
+				try {
+					const res = await api("openfile", { repo, file: item.path });
+					if (!res.ok) setOpenErr(res.error || "打开失败");
+				} catch (err) {
+					setOpenErr(err && err.message ? err.message : String(err));
+				} finally {
+					setOpening(false);
+				}
+			};
 
 			react.useEffect(() => {
 				if (!open) return;
 				const cached = cache.current.get(key);
-				if (cached) { setText(cached); return; }
+				if (cached) {
+					if (typeof cached === "string") {
+						setText(cached);
+						setMode("none");
+					} else {
+						setText(cached.text);
+						setMode(cached.mode || "none");
+					}
+					return;
+				}
 				let dead = false;
 				(async () => {
 					try {
@@ -143,6 +201,7 @@ window.__ModuleLoader__.load({
 							...(item.oldPath ? { old: item.oldPath } : {})
 						});
 						let t;
+						let mode = "none";
 						if (!res.ok) {
 							t = "加载失败: " + (res.error || "?");
 						} else if (res.isDir) {
@@ -151,13 +210,18 @@ window.__ModuleLoader__.load({
 							t = "（二进制文件，不显示内容）";
 						} else if (res.content !== undefined) {
 							t = res.content.trim() ? res.content : "（空文件）";
+							mode = "add";
 							if (res.truncated) t = "（内容过长已截断）\n" + t;
 						} else {
 							t = res.diff || "（无差异）";
+							mode = "diff";
 							if (res.truncated) t = "（diff 过长已截断）\n" + t;
 						}
-						cache.current.set(key, t);
-						if (!dead) setText(t);
+						cache.current.set(key, { text: t, mode });
+						if (!dead) {
+							setText(t);
+							setMode(mode);
+						}
 					} catch (err) {
 						if (!dead) setText("加载失败: " + (err && err.message ? err.message : String(err)));
 					}
@@ -173,9 +237,11 @@ window.__ModuleLoader__.load({
 					react_jsx_runtime.jsx("span", {
 						className: "gg-wd-path",
 						title: (item.oldPath ? item.oldPath + " → " : "") + item.path,
-						children: item.oldPath
-							? react_jsx_runtime.jsxs(react_jsx_runtime.Fragment, { children: [item.path, react_jsx_runtime.jsx("span", { className: "gg-wd-old", children: "  ← " + item.oldPath })] })
-							: item.path
+						children: react_jsx_runtime.jsxs(react_jsx_runtime.Fragment, { children: [
+							react_jsx_runtime.jsx("span", { className: "gg-wd-name", children: fileName }),
+							dirPath ? react_jsx_runtime.jsx("span", { className: "gg-wd-dir", children: " " + dirPath }) : null,
+							item.oldPath ? react_jsx_runtime.jsx("span", { className: "gg-wd-old", children: "  ← " + item.oldPath }) : null
+						] })
 					}),
 					item.code !== "?" && item.binary
 						? react_jsx_runtime.jsx("span", { className: "gg-wd-num", children: "二进制" })
@@ -187,7 +253,15 @@ window.__ModuleLoader__.load({
 			if (!open) return row;
 			return react_jsx_runtime.jsxs(react_jsx_runtime.Fragment, { children: [
 				row,
-				react_jsx_runtime.jsx("div", { className: "gg-wd-diff", children: react_jsx_runtime.jsx("pre", { children: text === null ? "加载中…" : text }) })
+				(item.code !== "D" || openErr)
+					? react_jsx_runtime.jsxs("div", { className: "gg-wd-diff-tools", children: [
+						item.code !== "D"
+							? react_jsx_runtime.jsx("button", { type: "button", className: "gg-wd-btn", onClick: handleOpen, disabled: opening, children: opening ? "打开中…" : "打开文件" })
+							: null,
+						openErr ? react_jsx_runtime.jsx("span", { className: "gg-wd-open-err", children: openErr }) : null
+					] })
+					: null,
+				react_jsx_runtime.jsx("div", { className: "gg-wd-diff", children: react_jsx_runtime.jsx("pre", { children: text === null ? "加载中…" : react_jsx_runtime.jsx(DiffLines, { text, mode }) }) })
 			] });
 		}
 
@@ -301,7 +375,7 @@ window.__ModuleLoader__.load({
 					}));
 					if (folded) continue; // folded groups render nothing (perf)
 					for (const it of g.items) {
-						rows.push(react_jsx_runtime.jsx(WorkdirFile, { item: it, staged: g.staged, repo, cache: diffCache }));
+						rows.push(react_jsx_runtime.jsx(WorkdirFile, { key: g.staged + "\u0000" + it.path, item: it, staged: g.staged, repo, cache: diffCache }));
 					}
 				}
 				body = rows;

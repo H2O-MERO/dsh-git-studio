@@ -1,5 +1,7 @@
 # dsh-git-studio
 
+🌏 [中文](./README.md) · English
+
 > 🧭 **A ready-to-use git visualizer for the DSH ecosystem.** An embedded git tool for the DeepSeek Harness (DSH) Web GUI: GitHub-style commit graph, branch management, code diffs, and a VSCode-style uncommitted changes panel — all inside your AI session, no need to switch to another git client.
 
 An embedded git repository graph visualizer for the DeepSeek Harness (DSH) Web GUI.
@@ -16,7 +18,8 @@ View, browse and manage git repositories right inside the harness conversation �
 
 ## 📸 Preview
 
-<img src="assets/git-graph-demo.png" alt="Git Graph demo" width="720">
+<a href="assets/git-graph-demo.png"><img src="assets/git-graph-demo.png" alt="Git Graph demo" width="720"></a>  
+<a href="https://github.com/user-attachments/assets/475ae991-6a54-47f7-8fe4-b5ec358cf50f"><img src="https://github.com/user-attachments/assets/475ae991-6a54-47f7-8fe4-b5ec358cf50f" alt="Git Graph screenshot" width="720"></a>
 
 ## ✨ Features
 
@@ -25,6 +28,8 @@ View, browse and manage git repositories right inside the harness conversation �
 - **Branch filtering**: checked = visible, unchecked = fully hidden (empty selection shows an empty list)
 - **Commit details**: commit message, changed files, per-file diffs, compare two commits (Ctrl+click)
 - **Uncommitted changes (VSCode-style, persistent at the top of the graph)**: grouped file lists (Staged / Changes / Untracked), status badges (A/M/D/R/U/?), per-file +/− line counts, click-to-expand per-file diff, renames `old → new`, untracked file contents; the ☑ groups toggle hides any group, and both the panel and each group fold on click
+- **Uncommitted changes side module**: the same panel is also available as a docked module on the right side of the session page (draggable width; width and collapsed state persist). When collapsed it shows only a slim handle, renders nothing and makes no requests; it automatically yields when the host tool-detail panel is open
+- **Right-click menu**: git operations such as checkout / merge / reset / cherry-pick / stash / create tag
 - **Keyboard shortcuts**: `Ctrl+F` search, `Ctrl+H` back to HEAD, `↑↓` navigation, `Esc` close
 - **Dark/light theme**: follows the host GUI automatically, or pin it manually
 - **Mount point**: the "Git 图谱" tab inside the session pane (next to the trajectory tab)

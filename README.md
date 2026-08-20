@@ -1,6 +1,6 @@
 # dsh-git-studio
 
-🌏 中文 · [English](./README_EN.md)
+🌏 中文 · [English](./README_EN.md)（点击查看英文版）
 
 > 🧭 **一句话定位：DSH 生态里开箱即用的 Git 可视化工具。** 在 DeepSeek Harness 对话界面内直接嵌入 GitHub 风格的提交历史图、分支管理、代码 Diff 与 VSCode 风格未提交改动面板——AI 开发时不用再切到别的 Git 客户端。
 
@@ -18,8 +18,8 @@ DeepSeek Harness（DSH）Web GUI 的嵌入式 Git 仓库图谱可视化插件。
 
 ## 📸 效果预览
 
-<img src="assets/git-graph-demo.png" alt="Git 图谱演示" width="720">  
-<img width="2009" height="1295" alt="image" src="https://github.com/user-attachments/assets/475ae991-6a54-47f7-8fe4-b5ec358cf50f" width="720" / >
+<a href="assets/git-graph-demo.png"><img src="assets/git-graph-demo.png" alt="Git 图谱演示" width="720"></a>  
+<a href="https://github.com/user-attachments/assets/475ae991-6a54-47f7-8fe4-b5ec358cf50f"><img src="https://github.com/user-attachments/assets/475ae991-6a54-47f7-8fe4-b5ec358cf50f" alt="image" width="720"></a>
   
 
 ## ✨ 功能
